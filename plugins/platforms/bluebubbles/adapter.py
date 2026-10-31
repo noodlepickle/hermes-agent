@@ -257,7 +257,12 @@ class BlueBubblesAdapter(BasePlatformAdapter):
         shared = getattr(self, "_shared_ingress_url", None)
         if shared:
             return shared
-        host = "localhost" if self.webhook_host in _LOCAL_HOSTS else self.webhook_host
+        # The listener binds IPv4 loopback by default. Register the literal
+        # IPv4 address instead of `localhost`, which may resolve to ::1 first.
+        if self.webhook_host in _LOCAL_HOSTS:
+            host = "127.0.0.1"
+        else:
+            host = self.webhook_host
         return f"http://{host}:{self.webhook_port}{self.webhook_path}"
 
     def _webhook_register_url_with(self, password_param: str) -> str:
